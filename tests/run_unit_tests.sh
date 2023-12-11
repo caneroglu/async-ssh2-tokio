@@ -1,5 +1,4 @@
 #!/bin/bash
-
 # change to script dir
 cd "${0%/*}" || exit 1
 

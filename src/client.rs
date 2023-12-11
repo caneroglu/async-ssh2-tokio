@@ -3,7 +3,7 @@ use russh::{
     client::{Config, Handle, Handler, Msg},
     Channel,
 };
-use std::fmt::Debug;
+use std::{fmt::Debug, path::{ PathBuf}};
 use std::io::{self, Write};
 use std::net::SocketAddr;
 use std::sync::Arc;
@@ -23,7 +23,7 @@ pub enum AuthMethod {
         key_pass: Option<String>,
     },
     PrivateKeyFile {
-        key_file_name: String,
+        key_file_name: PathBuf, //Since it is in a enum, i think it would be fair to use PathBuf instead of Path.
         key_pass: Option<String>,
     },
 }
@@ -34,7 +34,7 @@ pub enum ServerCheckMethod {
     NoCheck,
     /// base64 encoded key without the type prefix or hostname suffix (type is already encoded)
     PublicKey(String),
-    PublicKeyFile(String),
+    PublicKeyFile(PathBuf),
     DefaultKnownHostsFile,
     KnownHostsFile(String),
 }
@@ -52,9 +52,9 @@ impl AuthMethod {
         }
     }
 
-    pub fn with_key_file(key_file_name: &str, passphrase: Option<&str>) -> Self {
+    pub fn with_key_file(key_file_name: PathBuf, passphrase: Option<&str>) -> Self {
         Self::PrivateKeyFile {
-            key_file_name: key_file_name.to_string(),
+            key_file_name,
             key_pass: passphrase.map(str::to_string),
         }
     }
@@ -67,8 +67,8 @@ impl ServerCheckMethod {
         Self::PublicKey(key.to_string())
     }
 
-    pub fn with_public_key_file(key_file_name: &str) -> Self {
-        Self::PublicKeyFile(key_file_name.to_string())
+    pub fn with_public_key_file(key_file_name: PathBuf) -> Self {
+        Self::PublicKeyFile(key_file_name)
     }
 
     pub fn with_known_hosts_file(known_hosts_file: &str) -> Self {
@@ -365,7 +365,7 @@ impl Handler for ClientHandler {
                 Ok((self, pk == *server_public_key))
             }
             ServerCheckMethod::PublicKeyFile(key_file_name) => {
-                let pk = russh_keys::load_public_key(key_file_name)
+                let pk = russh_keys::load_public_key(key_file_name) // we can use it directly without any string conversation.
                     .map_err(|_| crate::Error::ServerCheckFailed)?;
 
                 Ok((self, pk == *server_public_key))
@@ -616,8 +616,8 @@ ASYNC_SSH2_TEST_SERVER_PUB
     async fn auth_key_file() {
         let client = Client::connect(
             test_address(),
-            &env("ASYNC_SSH2_TEST_HOST_USER"),
-            AuthMethod::with_key_file(&env("ASYNC_SSH2_TEST_CLIENT_PRIV"), None),
+            &env("ASYNC_SSH2_TEST_HOST_USER"), // for tests, i think it should be okay for
+            AuthMethod::with_key_file(PathBuf::from(&env("ASYNC_SSH2_TEST_CLIENT_PRIV")), None),
             ServerCheckMethod::NoCheck,
         )
         .await;
@@ -630,7 +630,7 @@ ASYNC_SSH2_TEST_SERVER_PUB
             test_address(),
             &env("ASYNC_SSH2_TEST_HOST_USER"),
             AuthMethod::with_key_file(
-                &env("ASYNC_SSH2_TEST_CLIENT_PROT_PRIV"),
+PathBuf::from(&env("ASYNC_SSH2_TEST_CLIENT_PROT_PRIV")),
                 Some(&env("ASYNC_SSH2_TEST_CLIENT_PROT_PASS")),
             ),
             ServerCheckMethod::NoCheck,
@@ -677,7 +677,7 @@ ASYNC_SSH2_TEST_SERVER_PUB
             test_address(),
             &env("ASYNC_SSH2_TEST_HOST_USER"),
             AuthMethod::with_password(&env("ASYNC_SSH2_TEST_HOST_PW")),
-            ServerCheckMethod::with_public_key_file(&env("ASYNC_SSH2_TEST_SERVER_PUB")),
+            ServerCheckMethod::with_public_key_file(PathBuf::from(&env("ASYNC_SSH2_TEST_SERVER_PUB"))),
         )
         .await;
         assert!(client.is_ok());

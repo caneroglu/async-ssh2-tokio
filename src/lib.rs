@@ -15,11 +15,11 @@
 //! #[tokio::main]
 //! async fn main() -> Result<(), async_ssh2_tokio::Error> {
 //!     // if you want to use key auth, then use following:
-//!     // AuthMethod::with_key_file("key_file_name", Some("passphrase"));
+//!     // AuthMethod::with_key_file(Pathbuf::from("key_file_name"), Some("passphrase"));
 //!     // or
-//!     // AuthMethod::with_key_file("key_file_name", None);
+//!     // AuthMethod::with_key_file(Pathbuf::from("key_file_name"), None);
 //!     // or
-//!     // AuthMethod::with_key(key: &str, passphrase: Option<&str>)
+//!     // AuthMethod::with_key(key: Pathbuf, passphrase: Option<&str>)
 //!     let auth_method = AuthMethod::with_password("root");
 //!     let mut client = Client::connect(
 //!         ("10.10.10.2", 22),
