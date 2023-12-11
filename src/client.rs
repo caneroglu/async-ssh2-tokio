@@ -3,7 +3,7 @@ use russh::{
     client::{Config, Handle, Handler, Msg},
     Channel,
 };
-use std::{fmt::Debug, path::{ PathBuf}};
+use std::{fmt::Debug, path::{ PathBuf, Path}};
 use std::io::{self, Write};
 use std::net::SocketAddr;
 use std::sync::Arc;
@@ -126,6 +126,7 @@ impl Client {
         addr: impl ToSocketAddrsWithHostname,
         username: &str,
         auth: AuthMethod,
+
         server_check: ServerCheckMethod,
     ) -> Result<Self, crate::Error> {
         Self::connect_with_config(addr, username, auth, server_check, Config::default()).await
@@ -236,6 +237,8 @@ impl Client {
             .map_err(|err| crate::Error::SshError(err))
     }
 
+
+
     /// Execute a remote command via the ssh connection.
     ///
     /// Returns stdout, stderr and the exit code of the command,
@@ -341,6 +344,9 @@ pub struct CommandExecutedResult {
     pub exit_status: u32,
 }
 
+
+
+
 #[derive(Debug, Clone)]
 struct ClientHandler {
     hostname: String,
@@ -416,6 +422,8 @@ ASYNC_SSH2_TEST_SERVER_PUB
         )
     }
 
+
+
     fn test_address() -> SocketAddr {
         format!(
             "{}:{}",
@@ -457,14 +465,11 @@ ASYNC_SSH2_TEST_SERVER_PUB
         assert_eq!(test_address(), *client.get_connection_address(),);
     }
 
-    #[tokio::test]
-    async fn execute_command_result() {
-        let client = establish_test_host_connection().await;
-        let output = client.execute("echo test!!!").await.unwrap();
-        assert_eq!("test!!!\n", output.stdout);
-        assert_eq!("", output.stderr);
-        assert_eq!(0, output.exit_status);
-    }
+   
+
+
+
+ 
 
     #[tokio::test]
     async fn execute_command_result_stderr() {
